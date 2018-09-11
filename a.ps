@@ -1,0 +1,128 @@
+%!PS-Adobe-1.0
+% По умолчанию, постскрипт использует единицу измерения 1 пункт=1/72 дюйма, 
+% а нам нравятся миллиметры.
+72 25.4 div           % 1 мм = 72/25.4 пунктов
+dup                   % дублировать значение на вершине стека
+scale                 % растянуть в это количество раз по обеим координатам
+
+/triangle {
+  /A exch def
+  gsave
+    newpath
+    0 0 0.2 0 360 arc
+    closepath
+    fill
+
+    newpath
+
+    A -2 div
+    A 3 sqrt -6 div mul
+    moveto
+
+    A 2 div
+    A 3 sqrt 2 div mul
+    rlineto
+
+    A 2 div
+    A 3 sqrt -2 div mul
+    rlineto
+
+    closepath
+    0.2 setlinewidth
+    stroke
+  grestore
+} def
+
+/star {
+  /A exch def
+
+  gsave
+    newpath
+
+    720 5 div rotate
+    0 A moveto
+
+    720 5 div rotate
+    0 A lineto
+
+    720 5 div rotate
+    0 A lineto
+
+    720 5 div rotate
+    0 A lineto
+
+    720 5 div rotate
+    0 A lineto
+
+    720 5 div rotate
+    0 A lineto
+
+    closepath
+
+    fill
+  grestore
+
+gsave
+  255 255 255 setrgbcolor
+  0 0 0.3 0 360 arc fill
+grestore
+
+} def
+
+
+
+/tower {
+  /H exch def
+  /D exch def
+  gsave
+    newpath
+    0 0 D 0 360 arc
+
+    D 2 div dup moveto
+    D -2 div H rlineto
+
+    0.2 setlinewidth stroke
+  grestore
+} def
+
+
+/next {
+  20 0 translate
+  gsave
+    127 0 0 setrgbcolor
+    0.2 setlinewidth
+    newpath
+
+    -10 0 moveto
+    10 0 lineto
+
+    0 -10 moveto
+    0  10 lineto
+
+    stroke
+  grestore
+} def
+
+
+0 200 translate
+
+next
+1.8 triangle
+
+next
+1.4 triangle
+
+next
+2.1 star
+
+next
+1.6 star
+
+next
+1.5 3.5 tower
+
+next
+2.5 4 tower
+
+showpage              % вывести страницу
+
