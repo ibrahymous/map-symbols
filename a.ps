@@ -1,9 +1,38 @@
 %!PS-Adobe-1.0
-% По умолчанию, постскрипт использует единицу измерения 1 пункт=1/72 дюйма, 
-% а нам нравятся миллиметры.
-72 25.4 div           % 1 мм = 72/25.4 пунктов
-dup                   % дублировать значение на вершине стека
-scale                 % растянуть в это количество раз по обеим координатам
+
+% gs -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16m -dGraphicsAlphaBits=4
+%    -r300x300 -sOutputFile=a.png a.ps && feh -F a.png
+%
+% convert a.png -shave 118x118 b.png
+% convert b.png -crop 235x235 +repage sym%d.png
+%
+%
+%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% Точное положение объекта на местности показывает главная точка
+% внемасштабного условного знака. Главная точка находится:
+% - у знаков симметричной формы – в центре фигуры;
+% - у знаков с широким основанием – в середине основания;
+% - у знаков, имеющих основание в виде прямого угла, – в вершине угла;
+% - у знаков, представляющих собой сочетание нескольких фигур, – в центре
+%    нижней фигуры.
+%
+% [http://topography.ltsu.org/topography/t8.html]
+%
+%
+%
+% Условные знаки на оригиналах карт выполняются четкими линиями толщиной
+% 0.15 мм, если большая или меньшая толщина линии знака (элемента знака)
+% не указана цифровой подписью или не оговорена в Пояснениях.
+%
+% [УСЛОВНЫЕ ЗНАКИ ДЛЯ ТОПОГРАФИЧЕСКИХ КАРТ МАСШТАБОВ 1:25000, 1:50000,
+%  1:100000 - Военно-топографическое управление Генерального штаба, М.: 1983.]
+
+
 
 /triangle {
   /A exch def
@@ -28,83 +57,292 @@ scale                 % растянуть в это количество раз
     rlineto
 
     closepath
-    0.2 setlinewidth
-    stroke
+    0.15 setlinewidth stroke
   grestore
 } def
 
-/star {
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+/star_path {
+  count 3 ge
+  {
+    /Rin  exch def
+    /Rout exch def
+    /N    exch def
+  }
+  {
+    /Rout exch def
+    /N    exch def
+
+    % https://ru.wikipedia.org/wiki/%D0%97%D0%B2%D0%B5%D0%B7%D0%B4%D0%B0_(%D0%B3%D0%B5%D0%BE%D0%BC%D0%B5%D1%82%D1%80%D0%B8%D1%8F)
+    /M    N 1 sub 2 div floor 1.0 mul def
+    /Rin  
+          180 N div M mul cos
+          180 N div M 1 sub mul cos
+          div
+          Rout mul
+          def
+  }
+  ifelse
+
+  newpath
+
+  0 Rout moveto
+
+  0 1 N 2 sub { pop
+
+    180 N div rotate
+    0 Rin lineto
+
+    180 N div rotate
+    0 Rout lineto
+
+  } for
+
+  180 N div rotate
+  0 Rin lineto
+
+
+  closepath
+
+} def
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+/star5 {
+  /D exch def
+  gsave
+    5 D 2 div star_path
+    fill
+  grestore
+} def
+
+
+/star5hole {
+  /D exch def
   /A exch def
 
   gsave
-    newpath
-
-    720 5 div rotate
-    0 A moveto
-
-    720 5 div rotate
-    0 A lineto
-
-    720 5 div rotate
-    0 A lineto
-
-    720 5 div rotate
-    0 A lineto
-
-    720 5 div rotate
-    0 A lineto
-
-    720 5 div rotate
-    0 A lineto
-
-    closepath
-
+    5 A 2 div star_path
     fill
   grestore
 
-gsave
-  255 255 255 setrgbcolor
-  0 0 0.3 0 360 arc fill
-grestore
+  gsave
+    255 255 255 setrgbcolor
+    0 0 D 2 div 0 360 arc fill
+  grestore
 
 } def
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-/tower {
+
+/tower {  % <diameter> <total_height> tower
   /H exch def
   /D exch def
   gsave
+    /a D 2 div def    % a = D/2
+    /c H a sub def    % c = H - a
+    /b c dup mul a dup mul sub sqrt def % b = sqrt(c*c - a*a)
+    /ca a dup mul c div def   % ca = a*a / c
+    /cb b dup mul c div def   % cb = b*b / c
+    /h ca cb mul sqrt def     % h = sqrt(ca*cb)
+
     newpath
-    0 0 D 0 360 arc
+    0 0 a 0 360 arc
+    gsave
+    0.15 setlinewidth stroke
+    grestore
+    fill
 
-    D 2 div dup moveto
-    D -2 div H rlineto
+    newpath
+    0 h sub ca moveto
+    0 H lineto
+    h ca lineto
 
-    0.2 setlinewidth stroke
+    0.15 setlinewidth stroke
   grestore
 } def
 
 
-/next {
-  20 0 translate
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+/nomad_camp {
+  /H exch def
+  /W exch def
   gsave
-    127 0 0 setrgbcolor
-    0.2 setlinewidth
-    newpath
-
-    -10 0 moveto
-    10 0 lineto
-
-    0 -10 moveto
-    0  10 lineto
-
-    stroke
+    0 W 2 div sub 0 moveto
+    W 2 div 0 lineto
+    0 0 H 0 180 arc
+    0.15 setlinewidth stroke
   grestore
 } def
 
 
-0 200 translate
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+/tetris {
+  gsave
+  newpath
+  0 0 moveto
+  -2.0 0.0 rmoveto
+  0.0 0.8 rlineto
+  2.0 0.0 rlineto
+  0.0 -0.8 rlineto
+  closepath
+  0.15 setlinewidth stroke
+
+  newpath
+  2 0 moveto
+  -2.0 0.0 rmoveto
+  0.0 0.8 rlineto
+  2.0 0.0 rlineto
+  0.0 -0.8 rlineto
+  closepath
+  0.15 setlinewidth stroke
+
+  newpath
+  1 0.8 moveto
+  -2.0 0.0 rmoveto
+  0.0 0.8 rlineto
+  2.0 0.0 rlineto
+  0.0 -0.8 rlineto
+  closepath
+  0.15 setlinewidth stroke
+
+  grestore
+} def
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+/airplane_path {
+  /A exch def
+  /s A 16 div def
+
+  s dup scale
+
+  newpath
+
+  0.0  8   moveto
+
+  1.5 8   1.0 3   1.0  2   curveto
+  7.0 -2   lineto
+  6.5 -3   lineto
+  1.5 -1   lineto
+  1.0 -2   lineto
+  0.5 -5   lineto
+  2.0 -6   lineto
+  2.0 -6.5 lineto
+  0.5 -6.5 lineto
+  0.0 -8   lineto  % curve?..
+
+ -0.0 -8   lineto  % curve?..
+ -0.5 -6.5 lineto
+ -2.0 -6.5 lineto
+ -2.0 -6   lineto
+ -0.5 -5   lineto
+ -1.0 -2   lineto
+ -1.5 -1   lineto
+ -6.5 -3   lineto
+ -7.0 -2   lineto
+ -1.0  2   lineto
+ -1.0 3 -1.5 8   0.0 8   curveto
+
+  closepath
+
+  1 s div dup scale
+} def
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+/N 0 def
+/next {
+  N 8 le {  % N < 8
+    20 0 translate
+    /N N 1 add def
+  } {
+    N 1 sub -20 mul -20 translate
+    /N 0 def
+  } ifelse
+
+ {
+ gsave
+   127 0 0 setrgbcolor
+   0.1 setlinewidth
+   newpath
+
+   -10 0 moveto
+   10 0 lineto
+
+   0 -10 moveto
+   0  10 lineto
+
+   stroke
+ grestore
+
+ gsave
+   127 0 0 setrgbcolor
+   0.1 setlinewidth
+
+   newpath
+   -0.5 -0.5 moveto
+   -0.5  0.5 lineto
+    0.5  0.5 lineto
+    0.5 -0.5 lineto
+   closepath
+   stroke
+
+   newpath
+   -1.0 -1.0 moveto
+   -1.0  1.0 lineto
+    1.0  1.0 lineto
+    1.0 -1.0 lineto
+   closepath
+   stroke
+
+   newpath
+   -1.5 -1.5 moveto
+   -1.5  1.5 lineto
+    1.5  1.5 lineto
+    1.5 -1.5 lineto
+   closepath
+   stroke
+
+  grestore
+} pop
+} def
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% Перетащим начало координат в левый верхний угол
+0
+currentpagedevice /PageSize get aload pop
+exch
+pop
+translate
+
+% По умолчанию, постскрипт использует единицу измерения 1 пункт=1/72 дюйма, 
+% а нам нравятся миллиметры.
+72 25.4 div           % 1 мм = 72/25.4 пунктов
+dup                   % дублировать значение на вершине стека
+scale                 % растянуть в это количество раз по обеим координатам
+
+0 -20 translate
 
 next
 1.8 triangle
@@ -113,16 +351,188 @@ next
 1.4 triangle
 
 next
-2.1 star
+2.1 0.5 star5hole
 
 next
-1.6 star
+1.6 0.4 star5hole
+
+next
+3.0 0.8 star5hole
 
 next
 1.5 3.5 tower
 
 next
-2.5 4 tower
+5.0 2.0 nomad_camp
 
-showpage              % вывести страницу
+
+next
+tetris
+
+
+next
+gsave
+  3.2 airplane_path
+  0.15 setlinewidth stroke
+grestore
+
+next
+gsave
+  2.4 airplane_path
+  0.15 setlinewidth stroke
+grestore
+
+
+
+next
+gsave
+  5 2 1 star_path
+  0.15 setlinewidth stroke
+grestore
+
+next
+gsave
+  5 2 star_path
+  fill
+grestore
+
+next
+gsave
+  6 2 star_path
+  0.15 setlinewidth stroke
+grestore
+
+next
+gsave
+  7 2 star_path
+  0.15 setlinewidth stroke
+grestore
+
+next
+gsave
+  0 0 0.5 0 360 arc
+  0.15 setlinewidth stroke
+  0 0.5 moveto
+  0 1.5 lineto
+  -0.5 1 moveto
+  0.5 1 lineto
+  0.15 setlinewidth stroke
+grestore
+
+next
+gsave
+  0 0 0.5 0 360 arc
+  0.15 setlinewidth stroke
+  0 0.5 moveto
+  0 1 lineto
+  0.15 setlinewidth stroke
+grestore
+
+next
+gsave
+  0 0 0.5 0 360 arc
+  0.15 setlinewidth stroke
+  0 0.5 moveto
+  0 1 lineto
+  0.15 setlinewidth stroke
+grestore
+next
+gsave
+  0 0 0.5 0 360 arc
+  0.15 setlinewidth stroke
+  0 0.5 moveto
+  0 1 lineto
+  0.15 setlinewidth stroke
+grestore
+
+next
+gsave
+  %10 dup scale
+  2 -2 scale
+
+  0.2997233 0.63099 moveto
+  0.1511091 0.18557
+  0.0621098 0.49548
+ -0.16356235 0.5739 rcurveto
+ -0.10757065 0.0428
+ -0.23461003 0.0309
+ -0.33253139 -0.0308 rcurveto
+  0.13463444 0.19521
+  0.4529952 0.2001
+  0.59354497 0.009 rcurveto
+  0.14020548 -0.16819
+  0.0916392 -0.44201
+ -0.0974512 -0.55221 rcurveto
+
+ fill
+grestore
+
+
+next
+gsave
+  0.1 0.1 scale
+
+  4 0 moveto
+  0 0 lineto
+  0 24 lineto
+  1.5 setlinewidth stroke
+
+  0 7 moveto
+  -2 6 -7 6 -7 10 curveto
+  -7 13 -4 14 -4 14 curveto
+  -6 16 -5 19 -2 19 curveto
+  -4 21 -3 24 0 24 curveto
+  1.5 setlinewidth stroke
+
+  -1 1 scale
+  0 7 moveto
+  -2 6 -7 6 -7 10 curveto
+  -7 13 -4 14 -4 14 curveto
+  -6 16 -5 19 -2 19 curveto
+  -4 21 -3 24 0 24 curveto
+  gsave
+  fill
+  grestore
+  1.5 setlinewidth stroke
+grestore
+
+
+next
+gsave
+
+  0.1 0.1 scale
+
+  4 0 moveto
+  0 0 lineto
+  0 24 lineto
+
+  -6 6 moveto
+  0 11 lineto
+  6 6 lineto
+
+  -6 12 moveto
+  0 18 lineto
+  6 12 lineto
+
+  -4 20 moveto
+  0 24 lineto
+  4 20 lineto
+
+  1.5 setlinewidth stroke
+
+grestore
+
+
+next
+gsave
+  0.1 0.1 scale
+  -10 0 moveto
+  -3 20 lineto
+  2 6 lineto
+  5 15 lineto
+  10 0 lineto
+  fill
+grestore
+
+showpage
 
